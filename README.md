@@ -1,4 +1,4 @@
-# testApplaudo
+# Store API coding challenge
 Hello there
 
 Ok, this is how this small demo work, you might find some commented code, those where ideas I wanted to implement based on my experience with Retail software that I worked on my early years, but time did not let me finish the implementation and I decided to stick to de basic of the challenge.
