@@ -10,6 +10,7 @@ using testApplaudo.Models;
 
 namespace testApplaudo.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class StocksController : ControllerBase

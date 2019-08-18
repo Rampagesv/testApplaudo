@@ -6,6 +6,10 @@ using System.Threading.Tasks;
 
 namespace testApplaudo.Models
 {
+    public class PriceLogOutputModel
+    {
+        public List<PriceLog> Items { get; set; }
+    }
     public class PriceLog
     {
         [Key]

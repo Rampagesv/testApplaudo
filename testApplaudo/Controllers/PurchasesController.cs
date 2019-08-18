@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using testApplaudo.Models;
 
 namespace testApplaudo.Controllers
@@ -42,24 +44,58 @@ namespace testApplaudo.Controllers
             return purchase;
         }
 
-        //PUT: api/Purchases/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutPurchase(int id, Purchase purchase)
+        // PUT: api/Purchases/5
+        //[HttpPut("{id}")]
+        //public async Task<IActionResult> PutPurchase(int id, Purchase purchase)
+        //{
+        //    if (id != purchase.PurchaseId)
+        //    {
+        //        return BadRequest();
+        //    }
+
+        //    _context.Entry(purchase).State = EntityState.Modified;
+
+        //    try
+        //    {
+        //        await _context.SaveChangesAsync();
+        //    }
+        //    catch (DbUpdateConcurrencyException)
+        //    {
+        //        if (!PurchaseExists(id))
+        //        {
+        //            return NotFound();
+        //        }
+        //        else
+        //        {
+        //            throw;
+        //        }
+        //    }
+
+        //    return NoContent();
+        //}
+
+        // POST: api/Purchases
+        [HttpPost]
+        public async Task<ActionResult<Purchase>> PostPurchase(Purchase purchase)
         {
+            // here we recover the user or customer login , without careing if it comes or not in
+            // the purchse object and we update the purchase object with the corresoponding user
+            var identity = HttpContext.User.Identity as ClaimsIdentity;
+            var LogedUser = identity.FindFirst(ClaimTypes.NameIdentifier).Value.ToString();
+            purchase.UserId = LogedUser;
 
-            if (id != purchase.PurchaseId)
+            // we recover the existing product quanty
+            var products = await _context.Products.FindAsync(purchase.ProductId);
+
+            if ((products.inStock - purchase.PurchaseTotal) > 0)
             {
-                return BadRequest();
-            }
+                _context.Purchase.Add(purchase);
+                await _context.SaveChangesAsync();
+                var createResult = CreatedAtAction("GetPurchase", new { id = purchase.PurchaseId }, purchase);
 
-            _context.Entry(purchase).State = EntityState.Modified;
+                products.inStock = (products.inStock - purchase.PurchaseTotal);
 
-            try
-            {
-                // I recover the existing product quanty
-                var products = await _context.Products.FindAsync(purchase.PurchaseId);
-
-                if ((products.inStock - purchase.PurchaseTotal) < 0)
+                if (createResult.StatusCode == 201)
                 {
                     var stock = new Stock
                     {
@@ -68,72 +104,37 @@ namespace testApplaudo.Controllers
                         MovementTypeid = 2,
                         MovementDate = DateTime.UtcNow,
                         MovementQuantity = purchase.PurchaseTotal,
-                        ProductQuantity = products.inStock - purchase.PurchaseTotal
+                        ProductQuantity = products.inStock 
                     };
-
-                    products.inStock = (products.inStock - purchase.PurchaseTotal);
-
                     _context.Products.Update(products);
                     _context.Stock.Add(stock);
-
                     await _context.SaveChangesAsync();
-                }
-                return NotFound();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!PurchaseExists(id))
-                {
-                    return NotFound();
+
+                    return createResult;
                 }
                 else
                 {
-                    throw;
+                    return NoContent();
                 }
             }
-
             return NoContent();
         }
 
-        // POST: api/Purchases
-        //[HttpPost]
-        //public async Task<ActionResult<Purchase>> PostPurchase(Purchase purchase)
-        //{
-        //    // I recover the existing product quanty
-        //    var products = await _context.Products.FindAsync(purchase.PurchaseId);
-
-        //    _context.Purchase.Add(purchase);
-        //    await _context.SaveChangesAsync();
-        //    var stock = new Stock
-        //    {
-        //        PurchaseId = purchase.PurchaseId,
-        //        ProductID = purchase.ProductId,
-        //        MovementTypeid = 2,
-        //        MovementDate = DateTime.UtcNow,
-        //        MovementQuantity = purchase.PurchaseTotal,
-        //        ProductQuantity = products.inStock - purchase.PurchaseTotal
-        //    };
-        //    _context.Products.Add(products);
-        //    return CreatedAtAction("GetPurchase", new { id = purchase.PurchaseId }, purchase);
-
-
-        //}
-
         // DELETE: api/Purchases/5
-        [HttpDelete("{id}")]
-        public async Task<ActionResult<Purchase>> DeletePurchase(int id)
-        {
-            var purchase = await _context.Purchase.FindAsync(id);
-            if (purchase == null)
-            {
-                return NotFound();
-            }
+        //[HttpDelete("{id}")]
+        //public async Task<ActionResult<Purchase>> DeletePurchase(int id)
+        //{
+        //    var purchase = await _context.Purchase.FindAsync(id);
+        //    if (purchase == null)
+        //    {
+        //        return NotFound();
+        //    }
 
-            _context.Purchase.Remove(purchase);
-            await _context.SaveChangesAsync();
+        //    _context.Purchase.Remove(purchase);
+        //    await _context.SaveChangesAsync();
 
-            return purchase;
-        }
+        //    return purchase;
+        //}
 
         private bool PurchaseExists(int id)
         {

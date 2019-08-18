@@ -31,74 +31,29 @@ namespace testApplaudo.Controllers
 
         // GET: api/PriceLogs/5
         [HttpGet("{Productid}")]
-        public async Task<ActionResult<PriceLog>> GetPriceLog(int Productid)
+        public async Task<IActionResult> GetPriceLog(int Productid)
         {
-            var priceLog = await _context.PriceLog.FindAsync(Productid);
+            // var priceLog = await _context.PriceLog.FindAsync(Productid);
+            var priceLogList = await _context.PriceLog.ToListAsync();
 
-            if (priceLog == null)
+
+            PriceLogOutputModel priceLog = new PriceLogOutputModel
             {
-                return NotFound();
-            }
-
-            return priceLog;
+                Items = priceLogList.Where(m => m.Productid == Productid).Select(m => ToPricelogInfo(m)).ToList()
+            };
+            return Ok(priceLog);
         }
-
-        //// PUT: api/PriceLogs/5
-        //[HttpPut("{id}")]
-        //public async Task<IActionResult> PutPriceLog(int id, PriceLog priceLog)
-        //{
-        //    if (id != priceLog.PriceLogid)
-        //    {
-        //        return BadRequest();
-        //    }
-
-        //    _context.Entry(priceLog).State = EntityState.Modified;
-
-        //    try
-        //    {
-        //        await _context.SaveChangesAsync();
-        //    }
-        //    catch (DbUpdateConcurrencyException)
-        //    {
-        //        if (!PriceLogExists(id))
-        //        {
-        //            return NotFound();
-        //        }
-        //        else
-        //        {
-        //            throw;
-        //        }
-        //    }
-
-        //    return NoContent();
-        //}
-
-        //// POST: api/PriceLogs
-        //[HttpPost]
-        //public async Task<ActionResult<PriceLog>> PostPriceLog(PriceLog priceLog)
-        //{
-        //    _context.PriceLog.Add(priceLog);
-        //    await _context.SaveChangesAsync();
-
-        //    return CreatedAtAction("GetPriceLog", new { id = priceLog.PriceLogid }, priceLog);
-        //}
-
-        //// DELETE: api/PriceLogs/5
-        //[HttpDelete("{id}")]
-        //public async Task<ActionResult<PriceLog>> DeletePriceLog(int id)
-        //{
-        //    var priceLog = await _context.PriceLog.FindAsync(id);
-        //    if (priceLog == null)
-        //    {
-        //        return NotFound();
-        //    }
-
-        //    _context.PriceLog.Remove(priceLog);
-        //    await _context.SaveChangesAsync();
-
-        //    return priceLog;
-        //}
-
+        private PriceLog ToPricelogInfo(PriceLog model)
+        {
+            return new PriceLog
+            {
+                PriceLogid = model.PriceLogid,
+                Productid = model.Productid,
+                NewPrice = model.NewPrice,
+                UserId = model.UserId,
+                Pricechangedate = model.Pricechangedate
+            };
+        }
         private bool PriceLogExists(int id)
         {
             return _context.PriceLog.Any(e => e.PriceLogid == id);

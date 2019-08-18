@@ -1,11 +1,13 @@
-﻿using System;
+﻿
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace testApplaudo.Models
 {
+    public class ProductsOutputModel
+    {
+        public List<Products> Items { get; set; }
+    }   
     public class Products
     {
         [Key]
@@ -14,7 +16,8 @@ namespace testApplaudo.Models
         public string ProductName { get; set; }
         public decimal ProductPrice { get; set; }
         public int inStock { get; set; }
-        public ICollection<Stock> Stock { get; set; }
+        public int ProductLikes { get; set; }
+        //public ICollection<Stock> Stock { get; set; }
 
     }
 }

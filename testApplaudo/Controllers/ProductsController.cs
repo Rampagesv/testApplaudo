@@ -10,18 +10,21 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Swashbuckle.AspNetCore.Annotations;
 using testApplaudo.Models;
+using testApplaudo.Others;
 
 namespace testApplaudo.Controllers
 {
     [SwaggerTag("Requests about values")]
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+
     public class ProductsController : ControllerBase
     {
+
         private readonly testApplaudoContext _context;
         private readonly UserManager<IdentityUser> _userManager;
         private string LogedUser = string.Empty;
+
 
         public ProductsController(testApplaudoContext context, UserManager<IdentityUser> userManager)
         {
@@ -50,49 +53,42 @@ namespace testApplaudo.Controllers
             return products;
         }
 
-        //// PUT: api/Products/5
-        //[Authorize]
-        //[HttpPut("{id}")]
-        //public async Task<IActionResult> PutProducts(int id, Products products)
-        //{
-        //    var identity = HttpContext.User.Identity as ClaimsIdentity;
-        //    bool canContinue = await IdentifyAdminLoginAsync(identity);
 
-        //    if (canContinue)
-        //    {
-        //        if (id != products.ProductId)
-        //        {
-        //            return BadRequest();
-        //        }
+        // POST: api/Products
+        [Authorize]
+        [HttpPost]
+        public async Task<ActionResult<Products>> PostProducts(Products products)
+        {
+            var identity = HttpContext.User.Identity as ClaimsIdentity;
+            bool canContinue = await IdentifyAdminLoginAsync(identity);
 
-        //        _context.Entry(products).State = EntityState.Modified;
+            if (canContinue)
+            {
+                _context.Products.Add(products);
+                await _context.SaveChangesAsync();
+                // I was thinking of leaving the Stock Insert in a separeted API Resp
+                // but lets say that the bussines logic demands to set an inictial stock
+                // wend a product is created, even if is zero :p
+                var stock = new Stock
+                {
+                    PurchaseId = 0,
+                    ProductID = products.ProductId,
+                    MovementTypeid = 1,
+                    MovementDate = DateTime.UtcNow,
+                    MovementQuantity = products.inStock,
+                    ProductQuantity = products.inStock
+                };
+                _context.Stock.Add(stock);
+                await _context.SaveChangesAsync();
 
-        //        try
-        //        {
-        //            await _context.SaveChangesAsync();
-        //        }
-        //        catch (DbUpdateConcurrencyException)
-        //        {
-        //            if (!ProductsExists(id))
-        //            {
-        //                return NotFound();
-        //            }
-        //            else
-        //            {
-        //                throw;
-        //            }
-        //        }
+                return CreatedAtAction("GetProducts", new { id = products.ProductId }, products);
+            }
+            return NotFound();
+        }
 
-        //        return NoContent();
-        //    }
-
-        //    return NotFound();
-        //}
-
-        // PUT: api/Products/Price/5
         [Authorize]
         [HttpPut("Price/{id}")]
-        public async Task<IActionResult> PutProductsPrice(int id, Products productsPrice)
+        public async Task<IActionResult> PutProductsPrice(int id, decimal productsPrice)
         {
             var identity = HttpContext.User.Identity as ClaimsIdentity;
             bool canContinue = await IdentifyAdminLoginAsync(identity);
@@ -103,7 +99,7 @@ namespace testApplaudo.Controllers
                 LogedUser = identity.FindFirst(ClaimTypes.NameIdentifier).Value.ToString();
 
                 var products = await _context.Products.FindAsync(id);
-                products.ProductPrice = productsPrice.ProductPrice;
+                products.ProductPrice = productsPrice;
 
                 if (id != products.ProductId)
                 {
@@ -143,20 +139,56 @@ namespace testApplaudo.Controllers
             return NotFound();
         }
 
-        // POST: api/Products
         [Authorize]
-        [HttpPost]
-        public async Task<ActionResult<Products>> PostProducts(Products products)
+        [HttpPut("QuantityAjust/{id}")]
+        public async Task<IActionResult> PutQuantityAjust(int id, int NewQuantity)
         {
             var identity = HttpContext.User.Identity as ClaimsIdentity;
             bool canContinue = await IdentifyAdminLoginAsync(identity);
 
             if (canContinue)
             {
-                _context.Products.Add(products);
-                await _context.SaveChangesAsync();
+                try
+                {
+                    LogedUser = identity.FindFirst(ClaimTypes.NameIdentifier).Value.ToString();
 
-                return CreatedAtAction("GetProducts", new { id = products.ProductId }, products);
+                    var products = await _context.Products.FindAsync(id);
+
+                    if (id != products.ProductId)
+                    {
+                        return BadRequest();
+                    }
+                    products.inStock = NewQuantity;
+
+                    Stock stock = new Stock
+                    {
+                        PurchaseId = 0,
+                        ProductID = products.ProductId,
+                        MovementTypeid = 4,
+                        MovementDate = DateTime.UtcNow,
+                        MovementQuantity = products.inStock,
+                        ProductQuantity = products.inStock
+                    };
+
+                    _context.Entry(products).State = EntityState.Modified;
+                    _context.Stock.Add(stock);
+                    await _context.SaveChangesAsync();
+
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!ProductsExists(id))
+                    {
+                        return NotFound();
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+
+                return NoContent();
+
             }
             return NotFound();
         }
@@ -193,5 +225,64 @@ namespace testApplaudo.Controllers
             var user = await _userManager.FindByNameAsync(claimsIdentity.FindFirst(ClaimTypes.NameIdentifier).Value.ToString());
             return await _userManager.IsInRoleAsync(user, "Admin");
         }
+
+        // api/GetProducts/
+        [HttpGet("Sort")]
+        public async Task<IActionResult> GetProductSort(string SortBy)
+        {
+            // DOTO: find a better sotution for this... need to read more
+            // I don't likes this quick soluction
+            var ProductList = await _context.Products.ToListAsync();
+            switch (SortBy)
+            {
+                case "ProductSKU":
+                    ProductsOutputModel SortProductSKU = new ProductsOutputModel
+                    {
+                        Items = ProductList.Select(m => ToProducInfo(m)).OrderBy(x => x.ProductSKU).ToList()
+                    };
+                    return Ok(SortProductSKU);
+                case "ProductPrice":
+                    ProductsOutputModel SortProductPrice = new ProductsOutputModel
+                    {
+                        Items = ProductList.Select(m => ToProducInfo(m)).OrderBy(x => x.ProductPrice).ToList()
+                    };
+                    return Ok(SortProductPrice);
+                case "inStock":
+                    ProductsOutputModel SortinStock = new ProductsOutputModel
+                    {
+                        Items = ProductList.Select(m => ToProducInfo(m)).OrderBy(x => x.inStock).ToList()
+                    };
+                    return Ok(SortinStock);
+                case "ProductLikes":
+                    ProductsOutputModel SortProductLikes = new ProductsOutputModel
+                    {
+                        Items = ProductList.Select(m => ToProducInfo(m)).OrderByDescending(x => x.ProductLikes).ToList()
+                    };
+                    return Ok(SortProductLikes);
+                case "ProductName":
+                default:
+                    ProductsOutputModel SortProductName = new ProductsOutputModel
+                    {
+                        Items = ProductList.Select(m => ToProducInfo(m)).OrderBy(x => x.ProductName).ToList()
+                    };
+                    return Ok(SortProductName);
+            }
+
+        }
+
+        private Products ToProducInfo(Products model)
+        {
+            return new Products
+            {
+                ProductId = model.ProductId,
+                ProductSKU = model.ProductSKU,
+                ProductName = model.ProductName,
+                ProductPrice = model.ProductPrice,
+                inStock = model.inStock,
+                ProductLikes = model.ProductLikes
+            };
+        }
     }
+
+
 }

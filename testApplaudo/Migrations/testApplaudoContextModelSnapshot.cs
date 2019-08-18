@@ -267,32 +267,19 @@ namespace testApplaudo.Migrations
 
             modelBuilder.Entity("testApplaudo.Models.ProductLikes", b =>
                 {
-                    b.Property<int>("ProductId")
+                    b.Property<long>("LikeId")
                         .ValueGeneratedOnAdd()
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<int>("Likes");
+                    b.Property<DateTime>("DateLiked");
 
-                    b.HasKey("ProductId");
+                    b.Property<int>("ProductId");
+
+                    b.Property<string>("UserId");
+
+                    b.HasKey("LikeId");
 
                     b.ToTable("ProductLikes");
-
-                    b.HasData(
-                        new
-                        {
-                            ProductId = 1,
-                            Likes = 2
-                        },
-                        new
-                        {
-                            ProductId = 2,
-                            Likes = 4
-                        },
-                        new
-                        {
-                            ProductId = 3,
-                            Likes = 6
-                        });
                 });
 
             modelBuilder.Entity("testApplaudo.Models.Products", b =>
@@ -300,6 +287,8 @@ namespace testApplaudo.Migrations
                     b.Property<int>("ProductId")
                         .ValueGeneratedOnAdd()
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<int>("ProductLikes");
 
                     b.Property<string>("ProductName");
 
@@ -317,26 +306,29 @@ namespace testApplaudo.Migrations
                         new
                         {
                             ProductId = 1,
+                            ProductLikes = 0,
                             ProductName = "Nespresso by De'Longhi ENV135R Coffee and Espresso Machine, Red",
                             ProductPrice = 118.56m,
                             ProductSKU = "B01M7UII5H",
-                            inStock = 2
+                            inStock = 10
                         },
                         new
                         {
                             ProductId = 2,
+                            ProductLikes = 0,
                             ProductName = "Keurig K-Classic Coffee Maker K-Cup Pod, Single Serve, Programmable, Black",
                             ProductPrice = 79.99m,
                             ProductSKU = "B018UQ5AMS",
-                            inStock = 3
+                            inStock = 10
                         },
                         new
                         {
                             ProductId = 3,
+                            ProductLikes = 0,
                             ProductName = "McCafe Decaf Premium Roast Keurig K Cup Coffee Pods 100 Cups",
                             ProductPrice = 53.17m,
                             ProductSKU = "B07SPW37M3",
-                            inStock = 4
+                            inStock = 10
                         });
                 });
 
@@ -352,7 +344,7 @@ namespace testApplaudo.Migrations
 
                     b.Property<int>("PurchaseTotal");
 
-                    b.Property<int>("UserId");
+                    b.Property<string>("UserId");
 
                     b.HasKey("PurchaseId");
 
@@ -398,9 +390,39 @@ namespace testApplaudo.Migrations
 
                     b.HasIndex("MovementTypeid");
 
-                    b.HasIndex("ProductID");
-
                     b.ToTable("Stock");
+
+                    b.HasData(
+                        new
+                        {
+                            MovementId = 1,
+                            MovementDate = new DateTime(2019, 8, 18, 3, 30, 25, 151, DateTimeKind.Utc).AddTicks(2501),
+                            MovementQuantity = 10,
+                            MovementTypeid = 1,
+                            ProductID = 1,
+                            ProductQuantity = 10,
+                            PurchaseId = 0
+                        },
+                        new
+                        {
+                            MovementId = 2,
+                            MovementDate = new DateTime(2019, 8, 18, 3, 30, 25, 151, DateTimeKind.Utc).AddTicks(4012),
+                            MovementQuantity = 10,
+                            MovementTypeid = 1,
+                            ProductID = 2,
+                            ProductQuantity = 10,
+                            PurchaseId = 0
+                        },
+                        new
+                        {
+                            MovementId = 3,
+                            MovementDate = new DateTime(2019, 8, 18, 3, 30, 25, 151, DateTimeKind.Utc).AddTicks(4028),
+                            MovementQuantity = 10,
+                            MovementTypeid = 1,
+                            ProductID = 3,
+                            ProductQuantity = 10,
+                            PurchaseId = 0
+                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -453,11 +475,6 @@ namespace testApplaudo.Migrations
                     b.HasOne("testApplaudo.Models.MovementTypes")
                         .WithMany("Stock")
                         .HasForeignKey("MovementTypeid")
-                        .OnDelete(DeleteBehavior.Cascade);
-
-                    b.HasOne("testApplaudo.Models.Products")
-                        .WithMany("Stock")
-                        .HasForeignKey("ProductID")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 #pragma warning restore 612, 618

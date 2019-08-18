@@ -8,15 +8,17 @@ I recommend to open the source code in Visual studio 2019, Since I created it th
 
 so please follow this steps
 
-1. in the nuget console run: Add-Migration InitialCreate
-
-2. in the nuget console run: Update-Database
+1. in the nuget console (Package Manager Console) run: Add-Migration InitialCreate
+2. in the nuget console (Package Manager Console) run: Update-Database (his step might take some time)
 	this will create and populate the database with some data, when is done, you should have the database ready
 
 3. run the program.
 
 FIRST RUN 
 ----------------------------------------------------------------------------------
+Note for postman: for some reason , you need to turn off 'SSL certificate verification' in Settings > General
+is the first time I use Postman, SoapUI, the one I normally use did not have that problem.
+
 the API will launch opening the auto-genetated Documentation located in the folowing URL witch it might change depending on the computer you are running this API Source:
 
 https://localhost:44302/docs/
@@ -49,6 +51,18 @@ Since you have created to users, Admin and the rest of the customers lets login 
 	}
 
 now that you have you users and token, is time to have fun with the API to validate the folowing
+
+REMARKS
+----------------------------------------------------------------------------------
+The price can be changed jus sending the new price with out sending the rest of the product 
+
+{
+   "productPrice": "300.00"
+}
+
+
+
+
 
 	# Store API coding challenge
 	This challenge is designed to put your skills to the test by designing and building a good REST API to manage a small snacks store using .net Core.

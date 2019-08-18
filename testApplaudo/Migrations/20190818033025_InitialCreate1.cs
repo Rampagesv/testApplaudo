@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace testApplaudo.Migrations
 {
-    public partial class InitialCreate : Migration
+    public partial class InitialCreate1 : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -95,13 +95,15 @@ namespace testApplaudo.Migrations
                 name: "ProductLikes",
                 columns: table => new
                 {
-                    ProductId = table.Column<int>(nullable: false)
+                    LikeId = table.Column<long>(nullable: false)
                         .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
-                    Likes = table.Column<int>(nullable: false)
+                    ProductId = table.Column<int>(nullable: false),
+                    UserId = table.Column<string>(nullable: true),
+                    DateLiked = table.Column<DateTime>(nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ProductLikes", x => x.ProductId);
+                    table.PrimaryKey("PK_ProductLikes", x => x.LikeId);
                 });
 
             migrationBuilder.CreateTable(
@@ -113,7 +115,8 @@ namespace testApplaudo.Migrations
                     ProductSKU = table.Column<string>(nullable: true),
                     ProductName = table.Column<string>(nullable: true),
                     ProductPrice = table.Column<decimal>(nullable: false),
-                    inStock = table.Column<int>(nullable: false)
+                    inStock = table.Column<int>(nullable: false),
+                    ProductLikes = table.Column<int>(nullable: false)
                 },
                 constraints: table =>
                 {
@@ -127,7 +130,7 @@ namespace testApplaudo.Migrations
                     PurchaseId = table.Column<int>(nullable: false)
                         .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
                     PurchaseDate = table.Column<DateTime>(nullable: false),
-                    UserId = table.Column<int>(nullable: false),
+                    UserId = table.Column<string>(nullable: true),
                     ProductId = table.Column<int>(nullable: false),
                     PurchaseTotal = table.Column<int>(nullable: false)
                 },
@@ -279,12 +282,6 @@ namespace testApplaudo.Migrations
                         principalTable: "MovementTypes",
                         principalColumn: "MovementTypeId",
                         onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_Stock_Products_ProductID",
-                        column: x => x.ProductID,
-                        principalTable: "Products",
-                        principalColumn: "ProductId",
-                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.InsertData(
@@ -308,24 +305,29 @@ namespace testApplaudo.Migrations
                 });
 
             migrationBuilder.InsertData(
-                table: "ProductLikes",
-                columns: new[] { "ProductId", "Likes" },
+                table: "Products",
+                columns: new[] { "ProductId", "ProductLikes", "ProductName", "ProductPrice", "ProductSKU", "inStock" },
                 values: new object[,]
                 {
-                    { 1, 2 },
-                    { 2, 4 },
-                    { 3, 6 }
+                    { 1, 0, "Nespresso by De'Longhi ENV135R Coffee and Espresso Machine, Red", 118.56m, "B01M7UII5H", 10 },
+                    { 2, 0, "Keurig K-Classic Coffee Maker K-Cup Pod, Single Serve, Programmable, Black", 79.99m, "B018UQ5AMS", 10 },
+                    { 3, 0, "McCafe Decaf Premium Roast Keurig K Cup Coffee Pods 100 Cups", 53.17m, "B07SPW37M3", 10 }
                 });
 
             migrationBuilder.InsertData(
-                table: "Products",
-                columns: new[] { "ProductId", "ProductName", "ProductPrice", "ProductSKU", "inStock" },
-                values: new object[,]
-                {
-                    { 1, "Nespresso by De'Longhi ENV135R Coffee and Espresso Machine, Red", 118.56m, "B01M7UII5H", 2 },
-                    { 2, "Keurig K-Classic Coffee Maker K-Cup Pod, Single Serve, Programmable, Black", 79.99m, "B018UQ5AMS", 3 },
-                    { 3, "McCafe Decaf Premium Roast Keurig K Cup Coffee Pods 100 Cups", 53.17m, "B07SPW37M3", 4 }
-                });
+                table: "Stock",
+                columns: new[] { "MovementId", "MovementDate", "MovementQuantity", "MovementTypeid", "ProductID", "ProductQuantity", "PurchaseId" },
+                values: new object[] { 1, new DateTime(2019, 8, 18, 3, 30, 25, 151, DateTimeKind.Utc).AddTicks(2501), 10, 1, 1, 10, 0 });
+
+            migrationBuilder.InsertData(
+                table: "Stock",
+                columns: new[] { "MovementId", "MovementDate", "MovementQuantity", "MovementTypeid", "ProductID", "ProductQuantity", "PurchaseId" },
+                values: new object[] { 2, new DateTime(2019, 8, 18, 3, 30, 25, 151, DateTimeKind.Utc).AddTicks(4012), 10, 1, 2, 10, 0 });
+
+            migrationBuilder.InsertData(
+                table: "Stock",
+                columns: new[] { "MovementId", "MovementDate", "MovementQuantity", "MovementTypeid", "ProductID", "ProductQuantity", "PurchaseId" },
+                values: new object[] { 3, new DateTime(2019, 8, 18, 3, 30, 25, 151, DateTimeKind.Utc).AddTicks(4028), 10, 1, 3, 10, 0 });
 
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
@@ -370,11 +372,6 @@ namespace testApplaudo.Migrations
                 name: "IX_Stock_MovementTypeid",
                 table: "Stock",
                 column: "MovementTypeid");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Stock_ProductID",
-                table: "Stock",
-                column: "ProductID");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
@@ -404,6 +401,9 @@ namespace testApplaudo.Migrations
                 name: "ProductLikes");
 
             migrationBuilder.DropTable(
+                name: "Products");
+
+            migrationBuilder.DropTable(
                 name: "Purchase");
 
             migrationBuilder.DropTable(
@@ -420,9 +420,6 @@ namespace testApplaudo.Migrations
 
             migrationBuilder.DropTable(
                 name: "MovementTypes");
-
-            migrationBuilder.DropTable(
-                name: "Products");
         }
     }
 }
