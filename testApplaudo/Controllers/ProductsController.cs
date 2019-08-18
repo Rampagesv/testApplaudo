@@ -53,7 +53,64 @@ namespace testApplaudo.Controllers
             return products;
         }
 
+        // Get: api/Products/Search
+        [HttpGet("Search/{ProductName}")]
+        public async Task<ActionResult<Products>> GetProducts(string ProductName)
+        {
 
+            var ProductList = await _context.Products.ToListAsync();
+
+            ProductsOutputModel SearchbyName = new ProductsOutputModel
+            {
+                      Items = ProductList.Where(m => m.ProductName.ToUpper().Contains(ProductName.ToUpper())).Select(m => ToProducInfo(m)).ToList() 
+            };
+            return Ok(SearchbyName);
+
+        }
+
+        // api/GetProducts/
+        [HttpGet("Sort")]
+        public async Task<IActionResult> GetProductSort(string SortBy)
+        {
+            // DOTO: find a better sotution for this... need to read more
+            // I don't likes this quick soluction
+            var ProductList = await _context.Products.ToListAsync();
+            switch (SortBy)
+            {
+                case "ProductSKU":
+                    ProductsOutputModel SortProductSKU = new ProductsOutputModel
+                    {
+                        Items = ProductList.Select(m => ToProducInfo(m)).OrderBy(x => x.ProductSKU).ToList()
+                    };
+                    return Ok(SortProductSKU);
+                case "ProductPrice":
+                    ProductsOutputModel SortProductPrice = new ProductsOutputModel
+                    {
+                        Items = ProductList.Select(m => ToProducInfo(m)).OrderBy(x => x.ProductPrice).ToList()
+                    };
+                    return Ok(SortProductPrice);
+                case "inStock":
+                    ProductsOutputModel SortinStock = new ProductsOutputModel
+                    {
+                        Items = ProductList.Select(m => ToProducInfo(m)).OrderBy(x => x.inStock).ToList()
+                    };
+                    return Ok(SortinStock);
+                case "ProductLikes":
+                    ProductsOutputModel SortProductLikes = new ProductsOutputModel
+                    {
+                        Items = ProductList.Select(m => ToProducInfo(m)).OrderByDescending(x => x.ProductLikes).ToList()
+                    };
+                    return Ok(SortProductLikes);
+                case "ProductName":
+                default:
+                    ProductsOutputModel SortProductName = new ProductsOutputModel
+                    {
+                        Items = ProductList.Select(m => ToProducInfo(m)).OrderBy(x => x.ProductName).ToList()
+                    };
+                    return Ok(SortProductName);
+            }
+
+        }
         // POST: api/Products
         [Authorize]
         [HttpPost]
@@ -193,6 +250,29 @@ namespace testApplaudo.Controllers
             return NotFound();
         }
 
+
+        private bool ProductsExists(int id)
+        {
+            return _context.Products.Any(e => e.ProductId == id);
+        }
+        private async Task<bool> IdentifyAdminLoginAsync(ClaimsIdentity claimsIdentity)
+        {
+            var user = await _userManager.FindByNameAsync(claimsIdentity.FindFirst(ClaimTypes.NameIdentifier).Value.ToString());
+            return await _userManager.IsInRoleAsync(user, "Admin");
+        }
+        private Products ToProducInfo(Products model)
+        {
+            return new Products
+            {
+                ProductId = model.ProductId,
+                ProductSKU = model.ProductSKU,
+                ProductName = model.ProductName,
+                ProductPrice = model.ProductPrice,
+                inStock = model.inStock,
+                ProductLikes = model.ProductLikes
+            };
+        }
+
         // DELETE: api/Products/5
         [Authorize]
         [HttpDelete("{id}")]
@@ -216,72 +296,6 @@ namespace testApplaudo.Controllers
             return NotFound();
         }
 
-        private bool ProductsExists(int id)
-        {
-            return _context.Products.Any(e => e.ProductId == id);
-        }
-        private async Task<bool> IdentifyAdminLoginAsync(ClaimsIdentity claimsIdentity)
-        {
-            var user = await _userManager.FindByNameAsync(claimsIdentity.FindFirst(ClaimTypes.NameIdentifier).Value.ToString());
-            return await _userManager.IsInRoleAsync(user, "Admin");
-        }
-
-        // api/GetProducts/
-        [HttpGet("Sort")]
-        public async Task<IActionResult> GetProductSort(string SortBy)
-        {
-            // DOTO: find a better sotution for this... need to read more
-            // I don't likes this quick soluction
-            var ProductList = await _context.Products.ToListAsync();
-            switch (SortBy)
-            {
-                case "ProductSKU":
-                    ProductsOutputModel SortProductSKU = new ProductsOutputModel
-                    {
-                        Items = ProductList.Select(m => ToProducInfo(m)).OrderBy(x => x.ProductSKU).ToList()
-                    };
-                    return Ok(SortProductSKU);
-                case "ProductPrice":
-                    ProductsOutputModel SortProductPrice = new ProductsOutputModel
-                    {
-                        Items = ProductList.Select(m => ToProducInfo(m)).OrderBy(x => x.ProductPrice).ToList()
-                    };
-                    return Ok(SortProductPrice);
-                case "inStock":
-                    ProductsOutputModel SortinStock = new ProductsOutputModel
-                    {
-                        Items = ProductList.Select(m => ToProducInfo(m)).OrderBy(x => x.inStock).ToList()
-                    };
-                    return Ok(SortinStock);
-                case "ProductLikes":
-                    ProductsOutputModel SortProductLikes = new ProductsOutputModel
-                    {
-                        Items = ProductList.Select(m => ToProducInfo(m)).OrderByDescending(x => x.ProductLikes).ToList()
-                    };
-                    return Ok(SortProductLikes);
-                case "ProductName":
-                default:
-                    ProductsOutputModel SortProductName = new ProductsOutputModel
-                    {
-                        Items = ProductList.Select(m => ToProducInfo(m)).OrderBy(x => x.ProductName).ToList()
-                    };
-                    return Ok(SortProductName);
-            }
-
-        }
-
-        private Products ToProducInfo(Products model)
-        {
-            return new Products
-            {
-                ProductId = model.ProductId,
-                ProductSKU = model.ProductSKU,
-                ProductName = model.ProductName,
-                ProductPrice = model.ProductPrice,
-                inStock = model.inStock,
-                ProductLikes = model.ProductLikes
-            };
-        }
     }
 
 
