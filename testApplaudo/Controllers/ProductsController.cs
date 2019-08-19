@@ -10,7 +10,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Swashbuckle.AspNetCore.Annotations;
 using testApplaudo.Models;
-using testApplaudo.Others;
 
 namespace testApplaudo.Controllers
 {
