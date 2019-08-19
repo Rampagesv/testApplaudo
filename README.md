@@ -10,7 +10,7 @@ I recommend to open the source code in Visual studio 2019, Since I created it th
 so please follow these steps
 
 1. in the NuGet console (Package Manager Console) run: Add-Migration InitialCreate
-2. in the NuGet console (Package Manager Console) run: Update-Database (his step might take some time)
+2. in the NuGet console (Package Manager Console) run: Update-Database (This step might take some time)
     this will create and populate the database with some data when it's done, you should have the database ready
 
 3. run the program.
