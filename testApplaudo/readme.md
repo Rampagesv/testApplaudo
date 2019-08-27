@@ -17,7 +17,7 @@ so please follow these steps
 FIRST RUN 
 ----------------------------------------------------------------------------------
 Note for postman: for some reason, you need to turn off 'SSL certificate verification' in Settings > General
-is the first time I use Postman, SoapUI, the one I normally use did not have that problem.
+is the first time I use Postman, SoapUI, the one I normally use and it did not have that problem.
 
 the API will launch opening the auto-generated Documentation located in the following URL witch it might change depending on the computer you are running this API Source:
 
@@ -34,7 +34,7 @@ https://localhost:44302/docs/
 
 LOGIN/ BEARER TOKEN
 ----------------------------------------------------------------------------------
-Since you have created to users, Admin and the rest of the customers lets login to the API to get the JTW Beared token you will have to use to validate or authenticate the rest of the API.
+Since you have created the users, Admin and the rest of the customers lets login to the API to get the JTW Beared token you will have to use to validate or authenticate the rest of the API.
 
 1. load the Login API
     https://localhost:44302/api/login
